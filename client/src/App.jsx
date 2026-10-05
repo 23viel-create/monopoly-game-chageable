@@ -1,29 +1,26 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import RegisterPage from './pages/RegisterPage';
-
-// דף בית זמני (רק בשביל שיהיה לנו לאן להגיע)
-function Home() {
-  return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>Monopoly Birthday Game 🎂</h1>
-      <p>Welcome! Please sign in or create an account.</p>
-      <nav>
-        <Link to="/register" style={{ marginRight: '20px' }}>Register</Link>
-        <Link to="/login">Login (Coming Soon)</Link>
-      </nav>
-    </div>
-  );
-}
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import { isLoggedIn } from './auth';
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* נתיב ראשי - דף הבית */}
-        <Route path="/" element={<Home />} />
-        
-        {/* נתיב להרשמה */}
+        <Route path="/" element={<Navigate to={isLoggedIn() ? '/dashboard' : '/login'} replace />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

@@ -1,13 +1,18 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api, { getErrorMessage } from '../api/client';
+import { saveSession } from '../auth';
 import AuthCard from '../components/AuthCard';
 import FormInput from '../components/FormInput';
 import Alert from '../components/Alert';
 import SubmitButton from '../components/SubmitButton';
 
-function RegisterPage() {
-  const [formData, setFormData] = useState({ username: '', email: '', password: '' });
+function LoginPage() {
+  const location = useLocation();
+  const [formData, setFormData] = useState({
+    email: location.state?.email || '',
+    password: '',
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -22,11 +27,9 @@ function RegisterPage() {
     setLoading(true);
 
     try {
-      const { data } = await api.post('/api/users/register', formData);
-      // Send the new user to the login page with their email filled in
-      navigate('/login', {
-        state: { email: data.user.email, message: 'Account created! Please sign in.' },
-      });
+      const { data } = await api.post('/api/users/login', formData);
+      saveSession(data.token, data.user);
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(getErrorMessage(err));
       setLoading(false);
@@ -35,31 +38,20 @@ function RegisterPage() {
 
   return (
     <AuthCard
-      title="Create an account"
-      subtitle="Join the game"
+      title="Sign in"
+      subtitle="Welcome back"
       footer={
         <>
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-emerald-700 hover:underline">
-            Sign in
+          Don&apos;t have an account?{' '}
+          <Link to="/register" className="font-medium text-emerald-700 hover:underline">
+            Create one
           </Link>
         </>
       }
     >
+      {!error && <Alert type="success">{location.state?.message}</Alert>}
       <Alert type="error">{error}</Alert>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <FormInput
-          label="Username"
-          id="username"
-          type="text"
-          autoComplete="username"
-          placeholder="Your display name"
-          value={formData.username}
-          onChange={handleChange}
-          maxLength={50}
-          required
-          disabled={loading}
-        />
         <FormInput
           label="Email"
           id="email"
@@ -68,7 +60,6 @@ function RegisterPage() {
           placeholder="you@example.com"
           value={formData.email}
           onChange={handleChange}
-          maxLength={255}
           required
           disabled={loading}
         />
@@ -76,21 +67,19 @@ function RegisterPage() {
           label="Password"
           id="password"
           type="password"
-          autoComplete="new-password"
-          placeholder="At least 6 characters"
+          autoComplete="current-password"
+          placeholder="Your password"
           value={formData.password}
           onChange={handleChange}
-          minLength={6}
-          maxLength={72}
           required
           disabled={loading}
         />
-        <SubmitButton loading={loading} loadingText="Creating account...">
-          Create account
+        <SubmitButton loading={loading} loadingText="Signing in...">
+          Sign in
         </SubmitButton>
       </form>
     </AuthCard>
   );
 }
 
-export default RegisterPage;
+export default LoginPage;
