@@ -1,16 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
+const { JWT_SECRET, JWT_EXPIRES_IN } = require('../config/jwt');
 
-//The fallback secret is for local development only; production must set JWT_SECRET
-const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'dev-only-insecure-jwt-secret');
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
-if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET must be set in production');
-}
-if (!process.env.JWT_SECRET) {
-    console.warn('⚠️JWT_SECRET is not set, using an insecure development fallback');
-}
 //Compared against when the email is unknown, so both failure paths take the same time
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync('dummy-password', 10);
 

@@ -19,7 +19,18 @@ const findUserByEmail = async (email) => {
     return result.rows[0];
 };
 
+//Returns the user's public fields (no password hash), or undefined if none exists
+const findUserById = async (id) => {
+    const query = `
+    SELECT id, username, email, is_verified, preferred_language, created_at
+    FROM users WHERE id = $1
+    `;
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
+};
+
 module.exports = {
     createUser,
-    findUserByEmail
+    findUserByEmail,
+    findUserById
 };
