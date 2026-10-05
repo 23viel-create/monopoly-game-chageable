@@ -1,5 +1,5 @@
 // Placeholder until board setup is built; shows what has been chosen so far
-function BoardAssetsStep({ name, image }) {
+function BoardAssetsStep({ name, image, saved }) {
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-800">Board assets</h2>
@@ -13,9 +13,14 @@ function BoardAssetsStep({ name, image }) {
         ) : (
           <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-gray-200 text-xs text-gray-500">No image</div>
         )}
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-sm text-gray-500">So far</p>
-          <p className="font-medium text-gray-800 break-all">{name}</p>
+          <p className="font-medium text-gray-800 [overflow-wrap:anywhere]">{name}</p>
+          {saved && (
+            <span className="mt-1 inline-block rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+              ✓ Draft saved
+            </span>
+          )}
         </div>
       </div>
     </div>

@@ -22,6 +22,25 @@ const isCloudinaryConfigured = () => {
     return Boolean(cloud_name && api_key && api_secret);
 };
 
+//True only for an https image URL from our Cloudinary account, inside the
+//given user's upload folder, so a game can't point at arbitrary external
+//images or at another user's uploads
+const isOwnUploadUrl = (url, userId) => {
+    const { cloud_name } = cloudinary.config();
+    if (!cloud_name || typeof url !== 'string' || url.length > 500) return false;
+    let parsed;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return false;
+    }
+    return parsed.protocol === 'https:'
+        && parsed.hostname === 'res.cloudinary.com'
+        && parsed.pathname.startsWith(`/${cloud_name}/image/upload/`)
+        && parsed.pathname.includes(`/${UPLOAD_FOLDER}/${userId}/`)
+        && !parsed.search && !parsed.hash;
+};
+
 //Multer keeps the file in memory; it is streamed to Cloudinary and never written to disk
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -51,6 +70,7 @@ module.exports = {
     upload,
     uploadImageBuffer,
     isCloudinaryConfigured,
+    isOwnUploadUrl,
     MAX_FILE_SIZE,
     ALLOWED_MIME_TYPES,
 };
