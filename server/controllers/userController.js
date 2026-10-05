@@ -1,5 +1,18 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
+
+//The fallback secret is for local development only; production must set JWT_SECRET
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'dev-only-insecure-jwt-secret');
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET must be set in production');
+}
+if (!process.env.JWT_SECRET) {
+    console.warn('⚠️JWT_SECRET is not set, using an insecure development fallback');
+}
+//Compared against when the email is unknown, so both failure paths take the same time
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync('dummy-password', 10);
 
 const USERNAME_MAX_LENGTH = 50;
 const EMAIL_MAX_LENGTH = 255;
@@ -69,4 +82,44 @@ const registerUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser };
+const loginUser = async (req, res) => {
+    const { password } = req.body || {};
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : req.body?.email;
+
+    if (typeof email !== 'string' || !email || typeof password !== 'string' || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    try {
+        const user = await userModel.findUserByEmail(email);
+        const passwordMatches = await bcrypt.compare(password, user ? user.password_hash : DUMMY_PASSWORD_HASH);
+
+        //Same response for unknown email and wrong password, so emails can't be probed
+        if (!user || !passwordMatches) {
+            return res.status(401).json({ message: 'Invalid email or password' });
+        }
+
+        const token = jwt.sign(
+            { id: user.id, email: user.email, username: user.username },
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRES_IN }
+        );
+
+        res.status(200).json({
+            message: 'Login successful',
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                isVerified: user.is_verified,
+                preferredLanguage: user.preferred_language
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+module.exports = { registerUser, loginUser };
