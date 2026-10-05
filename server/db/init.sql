@@ -1,7 +1,8 @@
--- Step 2.1: User Management schema
--- Safe to run multiple times (IF NOT EXISTS).
+-- Database schema
+-- Safe to run multiple times (IF NOT EXISTS): existing tables and data are kept.
 -- gen_random_uuid() is built into PostgreSQL 13+.
 
+-- Step 2.1: User Management
 CREATE TABLE IF NOT EXISTS users (
     id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username           VARCHAR(50) NOT NULL,
@@ -11,3 +12,18 @@ CREATE TABLE IF NOT EXISTS users (
     preferred_language VARCHAR(10) DEFAULT 'he',
     created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Step 3.1: Games created with the Game Creator wizard.
+-- board_data holds the board layout (tiles, cards, assets) as JSONB.
+CREATE TABLE IF NOT EXISTS games (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
+    name       VARCHAR(100) NOT NULL,
+    board_data JSONB DEFAULT '{}'::jsonb,
+    status     VARCHAR(20) DEFAULT 'draft',
+    join_code  VARCHAR(20) UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Postgres does not index foreign keys automatically; this speeds up "my games" lookups
+CREATE INDEX IF NOT EXISTS idx_games_user_id ON games(user_id);
