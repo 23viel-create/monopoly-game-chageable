@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import CreateGamePage from './pages/CreateGamePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { isLoggedIn } from './auth';
 
@@ -17,6 +18,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create-game"
+          element={
+            <ProtectedRoute>
+              <CreateGamePage />
             </ProtectedRoute>
           }
         />

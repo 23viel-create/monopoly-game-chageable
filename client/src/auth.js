@@ -11,6 +11,10 @@ export function clearSession() {
   localStorage.removeItem(USER_KEY);
 }
 
+export function getToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
 export function getUser() {
   try {
     return JSON.parse(localStorage.getItem(USER_KEY));
@@ -31,7 +35,7 @@ function isTokenExpired(token) {
 }
 
 export function isLoggedIn() {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = getToken();
   if (!token || isTokenExpired(token)) {
     clearSession();
     return false;
