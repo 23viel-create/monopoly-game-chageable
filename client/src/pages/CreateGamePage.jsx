@@ -6,7 +6,7 @@ function CreateGamePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <AppHeader />
-      <main className="mx-auto max-w-2xl px-4 py-10">
+      <main className="mx-auto max-w-3xl px-4 py-10">
         <Link to="/dashboard" className="text-sm font-medium text-emerald-700 hover:underline">
           ← Back to dashboard
         </Link>

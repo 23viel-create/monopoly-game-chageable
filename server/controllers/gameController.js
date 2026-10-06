@@ -1,5 +1,6 @@
 const gameModel = require('../models/gameModel');
 const { isOwnUploadUrl } = require('../services/uploadService');
+const { normalizeTiles } = require('../services/boardService');
 
 const NAME_MAX_LENGTH = 100;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -60,27 +61,36 @@ const createGame = async (req, res) => {
     }
 };
 
-//PATCH /api/games/:id - updates the name and/or center image of the user's own game
+//PATCH /api/games/:id - updates the name, center image and/or tiles of the user's own game
 const updateGameDetails = async (req, res) => {
     const { id } = req.params;
-    const { name, centerImage } = req.body || {};
+    const { name, centerImage, tiles } = req.body || {};
 
     //Not found rather than "forbidden", so other users' game ids aren't revealed
     if (!UUID_REGEX.test(id)) {
         return res.status(404).json({ message: 'Game not found' });
     }
-    if (name === undefined && centerImage === undefined) {
+    if (name === undefined && centerImage === undefined && tiles === undefined) {
         return res.status(400).json({ message: 'Nothing to update' });
     }
     const error = (name !== undefined && validateName(name)) || validateCenterImage(centerImage, req.user.id);
     if (error) {
         return res.status(400).json({ message: error });
     }
+    let normalizedTiles;
+    if (tiles !== undefined) {
+        const board = normalizeTiles(tiles);
+        if (board.error) {
+            return res.status(400).json({ message: board.error });
+        }
+        normalizedTiles = board.tiles;
+    }
 
     try {
         const game = await gameModel.updateGameDetails(id, req.user.id, {
             name: name === undefined ? undefined : name.trim(),
             centerImage: centerImage === undefined ? undefined : centerImage || null,
+            tiles: normalizedTiles,
         });
         if (!game) {
             return res.status(404).json({ message: 'Game not found' });

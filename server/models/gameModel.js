@@ -47,21 +47,23 @@ const updateBoardData = async (gameId, userId, boardData) => {
     return result.rows[0];
 };
 
-//Updates the name and/or center image of a game, only if userId owns it.
-//centerImage is merged into board_data so tiles and cards are kept.
+//Updates the name, center image and/or tiles of a game, only if userId owns it.
+//centerImage and tiles are merged into board_data, so other keys are kept.
 //Pass undefined to leave a field as it is (null clears the center image).
 //Returns the updated game, or undefined if it doesn't exist or isn't theirs.
-const updateGameDetails = async (gameId, userId, { name, centerImage }) => {
+const updateGameDetails = async (gameId, userId, { name, centerImage, tiles }) => {
+    const boardPatch = {};
+    if (centerImage !== undefined) boardPatch.centerImage = centerImage;
+    if (tiles !== undefined) boardPatch.tiles = tiles;
+
     const query = `
     UPDATE games
     SET name = COALESCE($3, name),
-        board_data = CASE WHEN $4::boolean
-                          THEN board_data || jsonb_build_object('centerImage', $5::text)
-                          ELSE board_data END
+        board_data = board_data || $4::jsonb
     WHERE id = $1 AND user_id = $2
     RETURNING *;
     `;
-    const values = [gameId, userId, name ?? null, centerImage !== undefined, centerImage ?? null];
+    const values = [gameId, userId, name ?? null, JSON.stringify(boardPatch)];
     const result = await pool.query(query, values);
     return result.rows[0];
 };
